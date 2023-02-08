@@ -1,0 +1,142 @@
+<html>
+
+    <head>
+        <title>AI</title>
+        <script src="//libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+        <script src="//cdn.bootcss.com/pagedown/1.0/Markdown.Converter.js"></script>
+
+        <link href="//cdn.bootcss.com/toastr.js/latest/css/toastr.min.css" rel="stylesheet">
+
+        <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script src="//cdn.bootcss.com/toastr.js/latest/js/toastr.min.js"></script>
+        <style> html { background:#F0FFFF;}</style
+
+    </head>
+
+    <body>
+        <center>
+            <br>
+            <br>
+            <h2 style="font-size:large;color:rgb(126, 16, 169);">ChatGPT3</h2>
+            <a style="font-size: small;color: chocolate;"  href="https://github.com/bugfan">Github</a>
+            <a style="font-size: small;color: chocolate;"  href="https://www.i996.me">内网穿透</a>
+            <br/>
+            <img style="margin-left:25px;" src="https://www.i996.me/img/qdmsj.png">
+            <br/>
+            <!-- <p class="hov">如果Token设置正确会自动保存</p> -->
+            <div class="hovt" ><input id="token" placeholder="输入👆公众号Token后可访问" style="width:190px" type="text" value="" /></div>
+            <hr style="width: 300px;">
+            <p style="font-size: small;color: chocolate;">输入问题后敲回车,或者点击下面的“发送”按钮</p>
+            <textarea id="text" type="text" style="width:210px;height: 80px;" ></textarea>
+            <br/>
+            <br/>
+            <button id="btn2" style="background-color: rgb(194, 183, 28);" onclick="cls()">清空</button>
+            <button id="btn1" style="background-color: aqua;" onclick="ask()">发送</button>
+        </center>
+        <center>
+            <br/>
+            <div id="load"><img style="width:100px;height:80px;" src="https://www.i996.me/img/load1.png" /></div>
+            <div style="width: 500px;text-align: center;" id="content"></div>
+        </center>
+
+    </body>
+
+    <script>
+        var at = document.getElementById('text')
+        at.onkeydown = function(e){
+            if((e||event).keyCode==13)
+                ask();
+        };
+        var tokenElement = document.getElementById('token')
+        var localToken = localStorage.getItem('_qdmsj_token')
+        if ( localToken != ''){
+            tokenElement.value = localToken
+        }
+
+        var text = "你好.\n\n 欢迎体验人工智能聊天机器人.";
+        var converter = new Markdown.Converter();
+        var html = converter.makeHtml(text);
+        $("#content").html(html);
+
+        var xhr=new XMLHttpRequest();  //new
+
+        toastr.options = { // toastr配置
+            "closeButton": true, //是否显示关闭按钮
+            "debug": false, //是否使用debug模式
+            "progressBar": false, //是否显示进度条，当为false时候不显示；当为true时候，显示进度条，当进度条缩短到0时候，消息通知弹窗消失
+            "positionClass": "toast-top-center",//显示的动画时间
+            "showDuration": "400", //显示的动画时间
+            "hideDuration": "1000", //消失的动画时间
+            "timeOut": "2000", //展现时间
+            "extendedTimeOut": "1000", //加长展示时间
+            "showEasing": "swing", //显示时的动画缓冲方式
+            "hideEasing": "linear", //消失时的动画缓冲方式
+            "showMethod": "fadeIn", //显示时的动画方式
+            "hideMethod": "fadeOut" //消失时的动画方式
+        }
+        function cls(){
+            document.getElementById('text').value = ''
+        }
+        function ask(){
+            var info = document.getElementById('btn1').innerHTML
+            if (info == '中断'){
+                xhr.abort()
+                free()
+                return 
+            }
+            // toastr.error("连接不能打开！");
+            // toastr.success("连接已建立，可以进行通信！")
+            // toastr.success("连接已建立，可以进行通信！", "成功")
+            // toastr.warning("连接建立失败，请重试！")
+            // toastr.info("请先登录！")
+
+            var token = tokenElement.value
+            if (token == ''){
+                toastr.info('填写正确Token后才能访问')
+                return
+            }
+
+            var q = document.getElementById('text').value
+            if (q == ''){
+                toastr.info('请输入问题后再提交')
+                return
+            }
+
+            xhr.open('POST',"/ask",true);//
+            xhr.setRequestHeader("Authorization", token);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            busy()
+            xhr.send(JSON.stringify({content:q}));
+            xhr.onreadystatechange=function(){
+                if (xhr.readyState==4){
+                    if (xhr.status==200){
+                        // save current token to local storage
+                        localStorage.setItem('_qdmsj_token',token)
+                        var str = xhr.responseText
+                        console.log(str);
+                        var converter = new Markdown.Converter();
+                        var html = converter.makeHtml(str);
+                        $("#content").html(html);
+                    }else if (xhr.status==403 || xhr.status==500 || xhr.status==202){
+                        toastr.warning(xhr.responseText)
+                    }
+                }
+                free()
+            };
+            xhr.onerror=function(){
+                toastr.error("请求异常");
+                free()
+            }
+        }
+        function busy(){
+            document.getElementById('btn1').innerHTML = '中断'
+            var load = document.getElementById('load')
+            load.innerHTML = `<img style="width:100px;height:80px;" src="https://www.i996.me/img/load2.gif" />`
+        }
+        function free(){
+            document.getElementById('btn1').innerHTML = '发送'
+            var load = document.getElementById('load')
+            load.innerHTML = `<img style="width:100px;height:80px;" src="https://www.i996.me/img/load1.png" />`
+        }
+    </script>
+</html>
